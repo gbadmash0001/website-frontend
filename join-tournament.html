@@ -68,13 +68,26 @@
       border: 1px solid #00c853;
       margin-top: 10px;
     }
+    .rules-link {
+      display: block;
+      text-align: middle;
+      font-size: 14px;
+      margin-bottom: 10px;
+      color: #00e676;
+      text-decoration: underline;
+      cursor: pointer;
+    }
+    
+    .rules-link:hover {
+      color: #00c853;
+    }
   </style>
 </head>
 <body>
 
 <div class="container">
   <h2>Join Tournament</h2>
-
+  <a href="rules.html" class="rules-link">Tournament Rules</a>
   <label for="matchType">Select Match Type:</label>
   <select id="matchType" onchange="updateEntryFees()">
     <option value="1">1v1</option>
@@ -126,7 +139,6 @@
       user.wallet_balance = data.wallet_balance;
       localStorage.setItem('user', JSON.stringify(user));
       document.getElementById('wallet_balance').textContent = `₹${data.wallet_balance}`;
-
     } catch (err) {
       console.error('[wallet] Error:', err.message);
       document.getElementById('wallet_balance').textContent = '₹--';
@@ -152,6 +164,27 @@
   function updateReward() {
     const entryFee = parseInt(document.getElementById("entryFee").value || 0);
     document.getElementById("reward").textContent = (entryFee * 1.8).toFixed(0);
+  }
+
+  function isJoinTimeAllowed() {
+    const now = new Date();
+    const hour = now.getHours();
+    return hour >= 16 && hour < 23; // Between 4 PM and before 11 PM
+  }
+
+  function toggleJoinButton() {
+    const confirmBtn = document.querySelector("button[onclick='confirmJoin()']");
+    if (!isJoinTimeAllowed()) {
+      confirmBtn.disabled = true;
+      confirmBtn.textContent = "Join Disabled (4 PM – 11 PM)";
+      confirmBtn.style.backgroundColor = "#555";
+      confirmBtn.style.cursor = "not-allowed";
+    } else {
+      confirmBtn.disabled = false;
+      confirmBtn.textContent = "Confirm";
+      confirmBtn.style.backgroundColor = "#00c853";
+      confirmBtn.style.cursor = "pointer";
+    }
   }
 
   async function confirmJoin() {
@@ -181,7 +214,6 @@
       if (handleUnauthorized(pendingRes.status)) return;
 
       const pendingData = await pendingRes.json();
-
       if (pendingData.pending) {
         alert('You already have a pending tournament.');
         return;
@@ -199,7 +231,6 @@
       if (handleUnauthorized(joinRes.status)) return;
 
       const joinData = await joinRes.json();
-
       if (!joinRes.ok) {
         const errMsg = joinData.errors
           ? joinData.errors.map(e => e.msg).join('\n')
@@ -220,6 +251,8 @@
 
   fetchWalletBalance();
   updateEntryFees();
+  toggleJoinButton(); // Enforce time-based access
+  setInterval(toggleJoinButton, 60000); // Auto-refresh every minute
 </script>
 
 </body>
